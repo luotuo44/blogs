@@ -18,10 +18,15 @@ FLV文件分为两个部分:文件头和数据部分。文件头包含的基本�
 盗用[雷神](http://blog.csdn.net/leixiaohua1020/article/details/17934487)的一张图，FLV的文件头和Tag简单如下：
 ![flv](https://raw.githubusercontent.com/luotuo44/FlvExploere/master/images/flv.jpg)
 
+ps:上图中有一个bug，第三个字节是字符"V"，其ASCII码为`0x56`。
+
 ScirptData、Video和Audio这三种tag具有相同的Tag Header，通过第一个字节(Type)标明具体是何种tag。不同的是Tag Data字段。
 
 # 文件头
 参考前面的图示，FLV的文件头可以一目了然。
+
+## Tag Header
+`Tag Header`包含Timestamp字段和Timestamp\_ex字段，两个字段合起来表示的时间戳是解码时间戳。其值乘以90就等于FFmpeg的AVPacket的dts成员。
 
 
 # ScriptData Tag
@@ -327,6 +332,24 @@ void parseDataValue(std::ifstream &in)
 |5|On2 VP6 with alpha channel|
 |6|Screen video version 2|
 |7|AVC|
+
+
+## AVC
+如果视频编码类型是`AVC`，那么还需从数据字段中解析`AVC`专属头部(也就是紧接着的4个字节)。因此整个`VideoData Tag`的`Tag data`头部解析如下图：
+![video_data_tag_header](https://raw.githubusercontent.com/luotuo44/FlvExploere/master/images/video_data_tag_header.jpg)
+
+**留意**上图中的`CompositionTime`，这个时间和TagHeader中的`ts`(由Timestamp和Timestamp\_ex构成)有什么区别和关联呢？ [stackoverflow](https://stackoverflow.com/questions/7054954/the-composition-timects-when-wrapping-h-264-nalus) 有一个解答，简单来说 90*(CompositionTime + ts)等于FFmpeg里面的AVPacket的pts成员。笔者找了几个不同帧率的FLV文件，解析FLV文件计算得到的值确实等于用FFmpeg读取到的AVPacket的pts成员。
+
+**注意**上面提及的FFmpeg的AVPacket是指av_read_frame读取的packet，还没经过解码成AVFrame。
+
+### sequence header
+如果AVCPacketType等于0，`CompositionTime`之后就是一个`AVCDecoderConfigurationRecord`结构，其包含`SPS`和`PPS`内容。该结构定义如下:
+![AVCDecoderConfigurationRecord.jpg](https://raw.githubusercontent.com/luotuo44/FlvExploere/master/images/AVCDecoderConfigurationRecord.jpg)
+
+值得注意的是 读取到的SPS和PPS的NALUnit数组，第一个字节是标准的NAL_TYPE值，也就是读取的SPS和PPS数组，第一个字节分别是`0x67`和`0x68`。
+
+### NALU
+如果`AVCPcketType`等于1，那么`CompositionTime`接下来的4个字节是长度信息(当然是网络字节序)，之后就是NALU数据。这个长度信息是NALU数据的大小(不包含长度信息本身)。正因为已经包含了长度信息，因此NALU不需要`0x00 0x00 0x01`这类的开始标志。
 
 
 
