@@ -64,9 +64,9 @@ make -j8
 **PS：** `zookeeper`本身的`C`接口有点难用，`github`上有一个还不错的封装[CppZooKeeperApi](https://github.com/godmoon/CppZooKeeperApi)。
 
 ### 将zookeeper加入到brpc中
-参考[命名服务](https://github.com/brpc/brpc/blob/master/docs/cn/load_balancing.md#%E5%91%BD%E5%90%8D%E6%9C%8D%E5%8A%A1)，采用定时更新的方式。需要做下面几件事情：
+参考[命名服务](https://github.com/brpc/brpc/blob/master/docs/cn/load_balancing.md#%E5%91%BD%E5%90%8D%E6%9C%8D%E5%8A%A1)，采用定时更新的方式。需要做下面两件事情：
 
-1. 编写`zookeeper`的命名服务。
+#### 1.编写`zookeeper`的命名服务。
 只需简单继承`brpc::PeriodicNamingService`类，并实现几个方法即可，`ZookeeperNamingService.h`文件如下:
 ```cpp
 #include"brpc/periodic_naming_service.h"
@@ -94,7 +94,7 @@ ZookeeperNamingService zk;
 NamingServiceExtension()->RegisterOrDie("zk", &g_ext->zk);
 ```
 
-### 重新编译brpc
+#### 2.重新编译brpc
 编译之前，需要改写`config_brpc.sh`文件。简单来说就是，加入`zookeeper`的头文件目录、库文件目录和需要链接的库。如果`zookeeper`的安装目录不是`brpc`依赖库本身安装的目录，那么需要拷贝一份到`brpc`依赖库本身安装的目录，或者建个软连接。
 在`$DYNAMIC_LINKINGS`变量定义的后面加入下面几行即可
 ```shell
@@ -109,6 +109,7 @@ DYNAMIC_LINKINGS="$DYNAMIC_LINKINGS -lzkmt"
 
 ### 使用zookeeper
 因为在`brpc/global.cpp`中采用的是`zk`标识符，所以使用的时候需要带有前缀`zk://`。 有两种使用方法。
+
 第一种方法：
 ```cpp
 brpc::ChannelOptions options;
