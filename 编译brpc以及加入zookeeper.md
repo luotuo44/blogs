@@ -45,7 +45,7 @@ make install
 
 
 
-##编译brpc
+## 编译brpc
 编译`brpc`有两种方式，使用`cmake`或者执行`brpc`提供的`config_brpc.sh`脚本。这里采用脚本的方式。
 ```shell
 ./config_brpc.sh --headers=/opt/brpc_build/include --libs=/opt/brpc_build/lib --with-glog
@@ -119,5 +119,5 @@ channel->Init("zk://10.0.0.1:8864,10.0.0.2:8864,10.0.0.3:8864/EchoServer", "rr",
 直接在`brpc::Channel`的`Init`函数的第一个参数带有`zookeeper`的服务器`IP`以及具体的`RPC`名称`EchoServer`，此时`ZookeeperNamingService::GetServers`的第一个参数的值将是`10.0.0.1:8864,10.0.0.2:8864,10.0.0.3:8864/EchoServer`，也就是说`zk://`后面的字符串会直接传递到`ZookeeperNamingService::GetServers`的第一个参数中。
 
 第二种方法：
-在`ZookeeperNamingService.cpp`函数中采用`gflags`参数，此时通过命令行参数指定`Zookeeper`的服务器`IP`，并且`brpc::Channel`的`Init`函数的第一个参数就可以简单写成`zk://EchoServer`。
+在`ZookeeperNamingService.cpp`函数中采用`gflags`参数，`ZookeeperNamingService`通过命令行参数获取`Zookeeper`的服务器`IP`。在调用`brpc::Channel`的`Init`时写成`channel.Init("zk:///EchoServer", "rr", &options)`，此时`ZookeeperNamingService::GetServers`的第一个参数值为`/EchoServer`。**PS：** `Init`的第二个参数不能是空字符串，必须指定某种调度方式。
 
