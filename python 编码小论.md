@@ -1,4 +1,4 @@
-**假定:**本文所描述的都是针对`python 2`版本，对于`python 3`版本会有所不同。
+**假定:** 本文所描述的都是针对`python 2`版本，对于`python 3`版本会有所不同。
 
 # 编码
 
@@ -133,7 +133,7 @@ UnicodeDecodeError: 'ascii' codec can't decode byte 0xe4 in position 2: ordinal 
 
    ​
 
-**PS：**对于下面代码
+**PS：** 对于下面代码
 
 ```python
 s = "中文"
@@ -206,7 +206,7 @@ json.dumps(a) type  <type 'str'>
 
 如果将`ensure_ascii`设置为`False`呢？对于上面的代码将会报错`UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 1: ordinal not in range(128)`。这是因为当`ensure_ascii=True`时，`json`内部是先将所有`str`类型解码成`unicode`类型，然后再拼接。如果`ensure_ascii=False`那么就是直接拼接，显然又回到了前面那个隐式转换问题上。
 
-**注意：**当`ensure_ascii=False`时，如果含有`unicode`类型，那么`json.dumps`返回的是`unicode`类型；如果不含有`unicode`类型，那么`json.dumps`返回的是`str`类型。
+**注意：** 当`ensure_ascii=False`时，如果含有`unicode`类型，那么`json.dumps`返回的是`unicode`类型；如果不含有`unicode`类型，那么`json.dumps`返回的是`str`类型。
 
 
 
