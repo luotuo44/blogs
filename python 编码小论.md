@@ -205,6 +205,7 @@ json.dumps(a) type  <type 'str'>
    这涉及到`json.dumps`的另外一个参数`ensure_ascii=True`。也就是`json`保证能用`ascii`编码格式能够cover住结果，所以不得不将`UNICODE`字符集都转换成`\u`形式。
 
 如果将`ensure_ascii`设置为`False`呢？对于上面的代码将会报错`UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 1: ordinal not in range(128)`。这是因为当`ensure_ascii=True`时，`json`内部是先将所有`str`类型解码成`unicode`类型，然后再拼接。如果`ensure_ascii=False`那么就是直接拼接，显然又回到了前面那个隐式转换问题上。
+**PS:** 如果是一个层次很深的dict，设置了`ensure_ascii=True`，但`dumps`的时候还报错，那么可以尝试将dict变量print一下，看看里面是否混杂着`str`和`unicode`两种类型。
 
 **注意：** 当`ensure_ascii=False`时，如果含有`unicode`类型，那么`json.dumps`返回的是`unicode`类型；如果不含有`unicode`类型，那么`json.dumps`返回的是`str`类型。
 
@@ -212,7 +213,7 @@ json.dumps(a) type  <type 'str'>
 
 **最佳实践**
 
-1. 保证要被`json.dumps`的字符类型都是`str`，然后把`dumps`的结果就直接`print`或者传给`mysql`
+1. 保证要被`json.dumps`的字符类型都是`str`，并且将`ensure_ascii`设置成`False`，然后把`dumps`的结果就直接`print`或者传给`mysql`
 2. 保证要被`json.dumps`的字符类型都是`unicode`，然后对`dumps`的结果再次`encode("utf-8")`，得到的结果就可以`print`或者传给`mysqwl`了
 
 
