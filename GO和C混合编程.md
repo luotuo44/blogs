@@ -337,3 +337,115 @@ go build main.go
 ```
 
 
+
+
+
+## C调用Go函数，实现回调功能
+
+当你要集成第三方`sdk`时，可能会发现只提供`C`语言版本的，比如海康摄像头。为了能在`Go`语言中获取到一些摄像头触发的事件，需要做到`C`调用`Go`的函数。
+
+为了实现这点，需要在`Go`那里到处函数，让`C`调用。具体的例子如下：
+
+`monitor.h`
+
+```c++
+#ifndef ADD_H_
+#define ADD_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void loopMonitor(const char *user, const char *password);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endi
+```
+
+
+
+`monitor.cpp`
+
+```c++
+#include"monitor.h"
+
+#include<stdio.h>
+
+#include "_cgo_export.h" //这个是必须包含的
+
+void GoCb(int a);//声明一个函数，这个函数是定义在Go代码里面的
+
+void loopMonitor(const char *user, const char *password)
+{
+    printf("user: %s \t password: %s\n", user, password);
+
+    GoCb(3); //调用Go函数
+    GoCb(10);
+}
+```
+
+
+
+`main.go`
+
+```go
+package main
+
+/*
+#include"monitor.h"
+*/
+import "C"
+
+import "fmt"
+
+
+func main(){
+
+    user, password := "admin", "123456"
+    C.loopMonitor(C.CString(user), C.CString(password))
+
+    fmt.Printf("hello world\n")
+}
+
+//下面这行注释不能删除，用于标明导出一个C语言函数。留意参数的类型.
+//export GoCb
+func GoCb(personNum C.int){
+    fmt.Printf("goCb: %d\n", int(personNum))
+}
+```
+
+
+
+直接执行`go build`即可完成编译。或者执行`go run .`，输出结果如下：
+
+```txt
+user: admin      password: 123456
+goCb: 3
+goCb: 10
+hello world
+```
+
+
+
+### 链接Windows动态库
+
+`cgo`在`Windows`是使用`mingw`编译C代码的，为此需要`Linux`格式的静态库。
+
+创建一个`add.def`文件，内容如下：
+
+```def
+LIBRARY add.dll
+
+EXPORTS
+add
+```
+
+其中第一行包含`dll`的名字。`EXPORTS`下面是需要从这个`dll`导出的函数名，一般是需要用到哪些就导出哪些。明显，你需要一个`dll`查看器，查看某个`dll`里面可以导出哪些函数名。[dll_export_viewer](http://www.nirsoft.net/utils/dll_export_viewer.html)是一个不错的工具。
+
+
+
+创建完上面的文件后，在`Windows`终端里面执行命令`dlltool -dllname add.dll --def add.def --output-lib libadd.a ` 执行完毕后，就可以在当前目录看到生成的`libadd.a`文件了。
+
